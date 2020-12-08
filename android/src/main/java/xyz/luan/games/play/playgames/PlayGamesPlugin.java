@@ -56,7 +56,8 @@ public class PlayGamesPlugin implements FlutterPlugin, ActivityAware, MethodCall
         channel.setMethodCallHandler(playGamesPlugin);
     }
 
-    public PlayGamesPlugin() {}
+    public PlayGamesPlugin() {
+    }
 
     public PlayGamesPlugin(Registrar registrar) {
         this.context = registrar.activity();
@@ -115,7 +116,8 @@ public class PlayGamesPlugin implements FlutterPlugin, ActivityAware, MethodCall
 
     private void startTransaction(MethodCall call, Result result) {
         if (pendingOperation != null) {
-            throw new IllegalStateException("signIn/showAchievements/showLeaderboard/saved games/snapshots cannot be used concurrently!");
+            throw new IllegalStateException(
+                    "signIn/showAchievements/showLeaderboard/saved games/snapshots cannot be used concurrently!");
         }
         pendingOperation = new PendingOperation(call, result);
     }
@@ -124,11 +126,10 @@ public class PlayGamesPlugin implements FlutterPlugin, ActivityAware, MethodCall
     public void onMethodCall(MethodCall call, Result result) {
         if (call.method.equals("signIn")) {
             startTransaction(call, result);
-            boolean requestEmail = getPropOrDefault(call, "requestEmail", true);
             boolean scopeSnapshot = getPropOrDefault(call, "scopeSnapshot", false);
             boolean silentSignInOnly = getPropOrDefault(call, "silentSignInOnly", false);
             try {
-                signIn(requestEmail, scopeSnapshot, silentSignInOnly);
+                signIn(scopeSnapshot, silentSignInOnly);
             } catch (Exception ex) {
                 pendingOperation = null;
                 throw ex;
@@ -186,21 +187,17 @@ public class PlayGamesPlugin implements FlutterPlugin, ActivityAware, MethodCall
         }
     }
 
-    private void signIn(boolean requestEmail, boolean scopeSnapshot, boolean silentSignInOnly) {
-        GoogleSignInOptions.Builder builder = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN);
-        if (requestEmail) {
-            builder.requestEmail();
-        }
-        if (scopeSnapshot) {
-            builder.requestScopes(Drive.SCOPE_APPFOLDER);
-        }
+    private void signIn(boolean scopeSnapshot, boolean silentSignInOnly) {
+        GoogleSignInOptions.Builder builder = new GoogleSignInOptions.Builder(
+                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN);
         GoogleSignInOptions opts = builder.build();
         GoogleSignInClient signInClient = GoogleSignIn.getClient(context, opts);
         silentSignIn(signInClient, silentSignInOnly);
     }
 
     private void signOut() {
-        GoogleSignInOptions.Builder builder = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN);
+        GoogleSignInOptions.Builder builder = new GoogleSignInOptions.Builder(
+                GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN);
         GoogleSignInOptions opts = builder.build();
         GoogleSignInClient signInClient = GoogleSignIn.getClient(context, opts);
         signInClient.signOut().addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -295,7 +292,8 @@ public class PlayGamesPlugin implements FlutterPlugin, ActivityAware, MethodCall
         if (pendingOperation == null) {
             return false;
         }
-        if (requestCode == RC_ACHIEVEMENT_UI || requestCode == RC_LEADERBOARD_UI || requestCode == RC_ALL_LEADERBOARD_UI) {
+        if (requestCode == RC_ACHIEVEMENT_UI || requestCode == RC_LEADERBOARD_UI
+                || requestCode == RC_ALL_LEADERBOARD_UI) {
             Map<String, Object> result = new HashMap<>();
             result.put("closed", true);
             result(result);
@@ -317,48 +315,51 @@ public class PlayGamesPlugin implements FlutterPlugin, ActivityAware, MethodCall
     }
 
     public void showAchievements() {
-        Games.getAchievementsClient(context, currentAccount).getAchievementsIntent().addOnSuccessListener(new OnSuccessListener<Intent>() {
-            @Override
-            public void onSuccess(Intent intent) {
-                activity.startActivityForResult(intent, RC_ACHIEVEMENT_UI);
-                result(new HashMap<>());
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                error("ERROR_SHOW_ACHIEVEMENTS", e);
-            }
-        });
+        Games.getAchievementsClient(context, currentAccount).getAchievementsIntent()
+                .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                    @Override
+                    public void onSuccess(Intent intent) {
+                        activity.startActivityForResult(intent, RC_ACHIEVEMENT_UI);
+                        result(new HashMap<>());
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        error("ERROR_SHOW_ACHIEVEMENTS", e);
+                    }
+                });
     }
 
     public void showLeaderboard(String leaderboardId) {
-        Games.getLeaderboardsClient(context, currentAccount).getLeaderboardIntent(leaderboardId).addOnSuccessListener(new OnSuccessListener<Intent>() {
-            @Override
-            public void onSuccess(Intent intent) {
-                activity.startActivityForResult(intent, RC_LEADERBOARD_UI);
-                result(new HashMap<>());
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                error("ERROR_SHOW_LEADERBOARD", e);
-            }
-        });
+        Games.getLeaderboardsClient(context, currentAccount).getLeaderboardIntent(leaderboardId)
+                .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                    @Override
+                    public void onSuccess(Intent intent) {
+                        activity.startActivityForResult(intent, RC_LEADERBOARD_UI);
+                        result(new HashMap<>());
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        error("ERROR_SHOW_LEADERBOARD", e);
+                    }
+                });
     }
 
     public void showAllLeaderboards() {
-        Games.getLeaderboardsClient(context, currentAccount).getAllLeaderboardsIntent().addOnSuccessListener(new OnSuccessListener<Intent>() {
-            @Override
-            public void onSuccess(Intent intent) {
-                activity.startActivityForResult(intent, RC_ALL_LEADERBOARD_UI);
-                result(new HashMap<>());
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-                error("ERROR_SHOW_LEADERBOARD", e);
-            }
-        });
+        Games.getLeaderboardsClient(context, currentAccount).getAllLeaderboardsIntent()
+                .addOnSuccessListener(new OnSuccessListener<Intent>() {
+                    @Override
+                    public void onSuccess(Intent intent) {
+                        activity.startActivityForResult(intent, RC_ALL_LEADERBOARD_UI);
+                        result(new HashMap<>());
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        error("ERROR_SHOW_LEADERBOARD", e);
+                    }
+                });
     }
 
     public Map<String, Snapshot> getLoadedSnapshot() {
